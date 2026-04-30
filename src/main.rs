@@ -209,7 +209,7 @@ fn init_logging() -> Result<()> {
         .with_env_filter(filter)
         .with_target(false)
         .try_init()
-        .context("failed to initialize logging")?;
+        .map_err(|e| anyhow::anyhow!("failed to initialize logging: {e}"))?;
     Ok(())
 }
 
@@ -253,7 +253,7 @@ Return a concise answer and include source URLs.",
 
     info!(prompt = %prompt, "sending prompt");
 
-    let response = agent.prompt(&prompt).await?;
+    let response = agent.prompt(&prompt).max_turns(40).await?;
     info!(response_len = response.len(), "received response");
     println!("{response}");
     Ok(())
