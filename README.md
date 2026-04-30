@@ -1,5 +1,5 @@
 # Rig DuckDuckGo Agent
-> **An async Rust-based agent leveraging the Rig framework, DuckDuckGo's instant answer API, and NVIDIA's OpenAI-compatible inference endpoints.**
+**An async Rust-based agent leveraging the Rig framework, DuckDuckGo's instant answer API, and NVIDIA's OpenAI-compatible inference endpoints.**
 
 This repository provides a minimal, high-performance CLI agent capable of querying the web via DuckDuckGo and synthesizing grounded responses using an LLM. It is built for seamless execution within containerized environments.
 
