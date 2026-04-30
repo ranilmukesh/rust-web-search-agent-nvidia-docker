@@ -4,3 +4,5 @@ target
 Dockerfile
 docker-compose.yml
 *.md
+.env
+rust-skills-master
