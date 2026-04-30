@@ -6,6 +6,8 @@ use rig::tool::{Tool, ToolError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::env;
+use tracing::{debug, info};
+use tracing_subscriber::EnvFilter;
 
 #[derive(Debug, Deserialize)]
 struct DuckDuckGoArgs {
@@ -94,6 +96,8 @@ impl Tool for DuckDuckGoSearch {
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
         let max_results = args.max_results.unwrap_or(5).clamp(1, 10);
 
+        info!(query = %args.query, max_results, "duckduckgo search");
+
         let mut url =
             reqwest::Url::parse("https://api.duckduckgo.com/").map_err(tool_call_error)?;
         url.query_pairs_mut()
@@ -102,6 +106,8 @@ impl Tool for DuckDuckGoSearch {
             .append_pair("no_redirect", "1")
             .append_pair("no_html", "1")
             .append_pair("t", "rig-ddg-agent");
+
+        debug!(url = %url, "duckduckgo request url");
 
         let response = reqwest::Client::new()
             .get(url)
@@ -140,6 +146,8 @@ impl Tool for DuckDuckGoSearch {
                 break;
             }
         }
+
+        info!(results = results.len(), "duckduckgo results ready");
 
         Ok(DuckDuckGoOutput {
             query: args.query,
@@ -195,8 +203,20 @@ fn normalize_base_url(base_url: String) -> String {
     }
 }
 
+fn init_logging() -> Result<()> {
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_target(false)
+        .try_init()
+        .context("failed to initialize logging")?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+    init_logging()?;
+
     let api_key = env::var("NVIDIA_API_KEY")
         .or_else(|_| env::var("OPENAI_API_KEY"))
         .context("Missing NVIDIA_API_KEY or OPENAI_API_KEY")?;
@@ -205,6 +225,8 @@ async fn main() -> Result<()> {
             .unwrap_or_else(|_| "https://integrate.api.nvidia.com/v1".to_string()),
     );
     let model = env::var("RIG_MODEL").unwrap_or_else(|_| "deepseek-ai/deepseek-v4-pro".to_string());
+
+    info!(base_url = %base_url, model = %model, "openai client configured");
 
     let client = openai::Client::builder()
         .api_key(&api_key)
@@ -229,7 +251,10 @@ Return a concise answer and include source URLs.",
         input
     };
 
+    info!(prompt = %prompt, "sending prompt");
+
     let response = agent.prompt(&prompt).await?;
+    info!(response_len = response.len(), "received response");
     println!("{response}");
     Ok(())
 }

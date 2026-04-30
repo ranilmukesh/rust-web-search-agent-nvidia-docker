@@ -18,11 +18,16 @@ NVIDIA OpenAI-compatible endpoint.
 
    docker compose run --rm rig-ddg-agent "What is Rig and how do I get started?"
 
+To increase logging:
+
+  RUST_LOG=debug docker compose run --rm rig-ddg-agent "What is Rig and how do I get started?"
+
 ## Local run (optional)
 
 If you want to run without Docker:
 
 NVIDIA_API_KEY=... RIG_OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1 \
+  RUST_LOG=debug \
   cargo run -- "Explain Rig in one paragraph"
 
 ## Notes
